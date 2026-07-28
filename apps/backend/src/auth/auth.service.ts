@@ -29,11 +29,20 @@ export class AuthService {
     address?: string;
     state?: string;
   }) {
+    if (!dto.companyName?.trim() || !dto.fullName?.trim() || !dto.email?.trim() || !dto.password?.trim()) {
+      throw new BadRequestException('Please fill in all required fields (Company Name, Full Name, Email, Password)');
+    }
+
+    const cleanEmail = dto.email.trim().toLowerCase();
+
     const existingUser = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: cleanEmail },
+    });
+    const existingCompany = await this.prisma.company.findUnique({
+      where: { email: cleanEmail },
     });
 
-    if (existingUser) {
+    if (existingUser || existingCompany) {
       throw new BadRequestException('Email address is already registered');
     }
 
@@ -45,19 +54,24 @@ export class AuthService {
       where: { tier: 'STARTER' },
     });
 
-    const company = await this.prisma.company.create({
-      data: {
-        name: dto.companyName,
-        email: dto.email,
-        phone: dto.phone,
-        gstin: dto.gstin,
-        address: dto.address,
-        state: dto.state || 'Tamil Nadu',
-        subscriptionStatus: 'TRIALING',
-        planId: defaultPlan ? defaultPlan.id : null,
-        subscriptionEndDate: trialEndDate,
-      },
-    });
+    let company;
+    try {
+      company = await this.prisma.company.create({
+        data: {
+          name: dto.companyName.trim(),
+          email: cleanEmail,
+          phone: dto.phone || '',
+          gstin: dto.gstin,
+          address: dto.address,
+          state: dto.state || 'Tamil Nadu',
+          subscriptionStatus: 'TRIALING',
+          planId: defaultPlan ? defaultPlan.id : null,
+          subscriptionEndDate: trialEndDate,
+        },
+      });
+    } catch (err: any) {
+      throw new BadRequestException('Failed to create company. Email or company name may already be registered.');
+    }
 
     const passwordHash = this.hashPassword(dto.password);
 

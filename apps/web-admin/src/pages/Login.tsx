@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+  import React, { useState } from 'react';
 import { apiFetch, setAuthToken } from '../services/api';
 import { DashboardMockupWidget } from '../components/DashboardMockupWidget';
 import { ArrowRight, Lock, Mail, Building, Phone, UserCheck } from 'lucide-react';
@@ -29,13 +29,18 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     try {
       if (isRegistering) {
+        if (!companyName.trim() || !fullName.trim() || !email.trim() || !password.trim()) {
+          setError('Please fill in Company Name, Full Name, Email, and Password');
+          setLoading(false);
+          return;
+        }
         const res = await apiFetch<any>('/auth/register', {
           method: 'POST',
           body: JSON.stringify({
-            companyName,
-            fullName,
-            email,
-            password,
+            companyName: companyName.trim(),
+            fullName: fullName.trim(),
+            email: email.trim(),
+            password: password.trim(),
             phone: phone || '+91 98765 43210',
           }),
         });

@@ -11,7 +11,7 @@ import { JwtStrategy } from './jwt.strategy';
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'ibs-super-secret-jwt-key-infinity-tech-2026',
       signOptions: { expiresIn: '7d' },
-    }),
+    }) as any,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

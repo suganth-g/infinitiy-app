@@ -35,10 +35,21 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
     throw new Error('Unauthorized');
   }
 
-  const data = await response.json();
+  let data: any = {};
+  const text = await response.text();
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: response.ok ? text : `Server error (${response.status}): ${text.substring(0, 100)}` };
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || 'API request failed');
+    const errorMsg = Array.isArray(data.message) 
+      ? data.message.join(', ') 
+      : (data.message || data.error || `API request failed with status ${response.status}`);
+    throw new Error(errorMsg);
   }
 
   return data as T;
